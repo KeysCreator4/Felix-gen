@@ -33,18 +33,22 @@ base_url = "https://discord.com/billing/partner-promotions/1180231712274387115/"
 def make_request():
     try:
         response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
+        response.raise_for_status()  # Raise HTTPError for bad responses
         response_json = response.json()
         token = response_json.get("token", "")
         if token:
             full_url = base_url + token
             with open(file_path, "a") as file:
-                file.write(full_url + '\n')
+                file.write(full_url + '\n')  # Append the URL and add a newline
             print(f"URL saved: {full_url}")
         else:
             print("Token not found in the response.")
     except requests.exceptions.HTTPError as errh:
-        print(f"HTTP Error: {errh}")
+        if response.status_code == 429:
+            print(f"HTTP Error 429 - Too Many Requests. Waiting for 10 minutes.")
+            time.sleep(600)  # Wait for 10 minutes (600 seconds)
+        else:
+            print(f"HTTP Error: {errh}")
     except requests.exceptions.RequestException as err:
         print(f"Request Error: {err}")
     except Exception as e:
